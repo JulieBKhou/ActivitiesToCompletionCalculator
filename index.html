@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edgenuity Activities Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        .icon-lg {
+            width: 32px;
+            height: 32px;
+        }
+        .course-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #f9fafb;
+        }
+        .course-card.has-data {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .activity-group {
+            background-color: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+        <div class="flex items-center gap-3 mb-6">
+            <svg class="icon icon-lg text-blue-600" viewBox="0 0 24 24">
+                <path d="M2 3h6l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6.5-5v5a2 2 0 01-2 2H9a2 2 0 01-2-2v-5"/>
+            </svg>
+            <h1 class="text-2xl font-bold text-gray-800">Edgenuity Activities Calculator</h1>
+        </div>
+
+        <!-- Student Name -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Student Name
+            </label>
+            <input
+                type="text"
+                id="studentName"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter student name"
+            />
+        </div>
+
+        <!-- Target Completion Date -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+                Target Completion Date *
+            </label>
+            <input
+                type="date"
+                id="endDate"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+        </div>
+
+        <!-- Courses Section -->
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Courses (up to 8)</h2>
+            <div id="coursesContainer"></div>
+            <button
+                id="addCourseBtn"
+                class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+                Add Course
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="result" class="bg-gray-50 p-4 rounded-lg hidden"></div>
+    </div>
+
+    <script>
+        let courseCount = 0;
+        const maxCourses = 8;
+
+        // Get today's date and set as minimum for date input
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('endDate').min = today;
+
+        // School holidays with date ranges
+        function getSchoolHolidays(year) {
+            const holidays = [];
+            
+            // Fixed holidays
+            holidays.push(`${year}-01-01`); // New Year's Day
+            holidays.push(`${year}-02-12`); // Lincoln's Birthday
+            holidays.push(`${year}-01-15`); // MLK Day (approximate)
+            holidays.push(`${year}-02-19`); // Presidents Day (approximate)
+            holidays.push(`${year}-05-27`); // Memorial Day (approximate)
+            holidays.push(`${year}-07-04`); // Independence Day
+            holidays.push(`${year}-09-02`); // Labor Day (approximate)
+            holidays.push(`${year}-10-14`); // Columbus Day (approximate)
+            holidays.push(`${year}-11-11`); // Veterans Day
+            holidays.push(`${year}-11-28`); // Thanksgiving (approximate)
+            holidays.push(`${year}-12-25`); // Christmas Day
+
+            // School break periods
+            // October 6-10
+            for (let day = 6; day <= 10; day++) {
+                holidays.push(`${year}-10-${day.toString().padStart(2, '0')}`);
+            }
+            
+            // November 24-28
+            for (let day = 24; day <= 28; day++) {
+                holidays.push(`${year}-11-${day.toString().padStart(2, '0')}`);
+            }
+            
+            // December 22 - January 6 (winter break spans years)
+            for (let day = 22; day <= 31; day++) {
+                holidays.push(`${year}-12-${day.toString().padStart(2, '0')}`);
+            }
+            for (let day = 1; day <= 6; day++) {
+                holidays.push(`${year + 1}-01-${day.toString().padStart(2, '0')}`);
+            }
+            
+            // March 23 - April 3 (spring break spans months)
+            for (let day = 23; day <= 31; day++) {
+                holidays.push(`${year}-03-${day.toString().padStart(2, '0')}`);
+            }
+            for (let day = 1; day <= 3; day++) {
+                holidays.push(`${year}-04-${day.toString().padStart(2, '0')}`);
+            }
+
+            return holidays;
+        }
+
+        function isWeekday(date) {
+            const day = date.getDay();
+            return day >= 1 && day <= 5; // Monday = 1, Friday = 5
+        }
+
+        function isHoliday(date, holidays) {
+            const dateString = date.toISOString().split('T')[0];
+            return holidays.includes(dateString);
+        }
+
+        function countWorkdays(startDate, endDate, holidays) {
+            let count = 0;
+            const current = new Date(startDate);
+            
+            while (current <= endDate) {
+                if (isWeekday(current) && !isHoliday(current, holidays)) {
+                    count++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return count;
+        }
+
+        function createActivityInput(activityType, courseNum) {
+            return `
+                <div class="activity-group">
+                    <h5 class="text-sm font-medium text-gray-700 mb-2">${activityType}</h5>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Completed</label>
+                            <input
+                                type="number"
+                                id="${activityType.toLowerCase().replace(/[^a-z]/g, '')}-completed-${courseNum}"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                min="0"
+                                value="0"
+                                onchange="updateCourseCard(${courseNum})"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Total</label>
+                            <input
+                                type="number"
+                                id="${activityType.toLowerCase().replace(/[^a-z]/g, '')}-total-${courseNum}"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                min="0"
+                                value="0"
+                                onchange="updateCourseCard(${courseNum})"
+                            />
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createCourseCard(courseNum) {
+            const courseCard = document.createElement('div');
+            courseCard.className = 'course-card';
+            courseCard.id = `course-${courseNum}`;
+            
+            const activityTypes = ['Quiz', 'Test', 'Exam', 'Essay/Assignment', 'Lab/Project'];
+            
+            courseCard.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-800">Course ${courseNum}</h3>
+                    <button onclick="removeCourse(${courseNum})" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Course Name</label>
+                    <input
+                        type="text"
+                        id="courseName-${courseNum}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Algebra II"
+                        onchange="updateCourseCard(${courseNum})"
+                    />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                    ${activityTypes.map(type => createActivityInput(type, courseNum)).join('')}
+                </div>
+
+                <div class="bg-blue-50 p-3 rounded-lg">
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-lg font-bold text-blue-600" id="totalActivities-${courseNum}">0</div>
+                            <div class="text-xs text-gray-600">Total Activities</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-green-600" id="completedActivities-${courseNum}">0</div>
+                            <div class="text-xs text-gray-600">Completed Activities</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return courseCard;
+        }
+
+        function calculateCourseTotal(courseNum) {
+            const activityTypes = ['quiz', 'test', 'exam', 'essayassignment', 'labproject'];
+            let totalActivities = 0;
+            let completedActivities = 0;
+
+            activityTypes.forEach(type => {
+                const completedEl = document.getElementById(`${type}-completed-${courseNum}`);
+                const totalEl = document.getElementById(`${type}-total-${courseNum}`);
+                
+                if (completedEl && totalEl) {
+                    const completed = parseInt(completedEl.value) || 0;
+                    const total = parseInt(totalEl.value) || 0;
+                    
+                    completedActivities += completed;
+                    totalActivities += total;
+                }
+            });
+
+            // Update the display
+            document.getElementById(`totalActivities-${courseNum}`).textContent = totalActivities;
+            document.getElementById(`completedActivities-${courseNum}`).textContent = completedActivities;
+
+            return { total: totalActivities, completed: completedActivities };
+        }
+
+        function addCourse() {
+            if (courseCount >= maxCourses) return;
+            
+            courseCount++;
+            const coursesContainer = document.getElementById('coursesContainer');
+            const courseCard = createCourseCard(courseCount);
+            coursesContainer.appendChild(courseCard);
+            
+            if (courseCount >= maxCourses) {
+                document.getElementById('addCourseBtn').style.display = 'none';
+            }
+            
+            calculateActivities();
+        }
+
+        function removeCourse(courseNum) {
+            const courseCard = document.getElementById(`course-${courseNum}`);
+            if (courseCard) {
+                courseCard.remove();
+                courseCount--;
+                if (courseCount < maxCourses) {
+                    document.getElementById('addCourseBtn').style.display = 'block';
+                }
+            }
+            calculateActivities();
+        }
+
+        function updateCourseCard(courseNum) {
+            const courseCard = document.getElementById(`course-${courseNum}`);
+            const courseName = document.getElementById(`courseName-${courseNum}`).value;
+            
+            // Calculate totals for this course
+            const totals = calculateCourseTotal(courseNum);
+            
+            // Update card styling based on data
+            if (courseName || totals.total > 0) {
+                courseCard.classList.add('has-data');
+            } else {
+                courseCard.classList.remove('has-data');
+            }
+            
+            calculateActivities();
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'bg-gray-50 p-4 rounded-lg';
+            resultDiv.innerHTML = `
+                <div class="flex items-center gap-2 text-red-600">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function showResults(data) {
+            const resultDiv = document.getElementById('result');
+            const studentName = document.getElementById('studentName').value;
+            
+            let coursesHtml = '';
+            let totalRemaining = 0;
+            let totalCompleted = 0;
+            let totalActivities = 0;
+            
+            data.courses.forEach(course => {
+                totalRemaining += course.remaining;
+                totalCompleted += course.completed;
+                totalActivities += course.total;
+                
+                const progressPercent = course.total > 0 ? Math.round((course.completed / course.total) * 100) : 0;
+                coursesHtml += `
+                    <div class="bg-white p-4 rounded-lg border mb-3">
+                        <h4 class="font-semibold text-gray-800 mb-3">${course.name}</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div class="text-center">
+                                <span class="text-gray-600 block">Total</span>
+                                <div class="text-lg font-bold text-gray-800">${course.total}</div>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-gray-600 block">Completed</span>
+                                <div class="text-lg font-bold text-green-600">${course.completed}</div>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-gray-600 block">Remaining</span>
+                                <div class="text-lg font-bold text-blue-600">${course.remaining}</div>
+                            </div>
+                            <div class="text-center">
+                                <span class="text-gray-600 block">Per Day</span>
+                                <div class="text-lg font-bold text-purple-600">${course.dailyTarget}</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 border-t">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Progress:</span>
+                                <span class="text-sm font-semibold text-green-600">${progressPercent}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: ${progressPercent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            const overallProgress = totalActivities > 0 ? Math.round((totalCompleted / totalActivities) * 100) : 0;
+            const overallDailyTarget = totalRemaining > 0 ? Math.ceil(totalRemaining / data.workdays) : 0;
+            
+            resultDiv.className = 'bg-gray-50 p-4 rounded-lg';
+            resultDiv.innerHTML = `
+                <div class="space-y-4">
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold text-gray-800">${studentName ? `Study Plan for ${studentName}` : 'Your Study Plan'}</h3>
+                        <p class="text-gray-600">Target completion: ${data.endDate}</p>
+                    </div>
+                    
+                    <!-- Overall Summary -->
+                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
+                        <h4 class="font-semibold text-gray-800 mb-3 text-center">Overall Summary</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-gray-800">${totalActivities}</div>
+                                <div class="text-xs text-gray-600">Total Activities</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-green-600">${totalCompleted}</div>
+                                <div class="text-xs text-gray-600">Completed</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-blue-600">${totalRemaining}</div>
+                                <div class="text-xs text-gray-600">Remaining</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-orange-600">${data.workdays}</div>
+                                <div class="text-xs text-gray-600">Workdays Left</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-purple-600">${overallDailyTarget}</div>
+                                <div class="text-xs text-gray-600">Total Per Day</div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm text-gray-600">Overall Progress:</span>
+                                <span class="text-sm font-semibold text-green-600">${overallProgress}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full" style="width: ${overallProgress}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Individual Courses -->
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Course Breakdown</h4>
+                        ${coursesHtml}
+                    </div>
+                    
+                    <div class="text-xs text-gray-500 text-center border-t pt-3">
+                        * Calculation excludes weekends and school holidays (including Oct 6-10, Nov 24-28, Dec 22-Jan 6, Lincoln's Birthday, Mar 23-Apr 3)<br>
+                        * Activities include: Quizzes, Tests, Exams, Essays/Assignments, and Labs/Projects
+                    </div>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        function calculateActivities() {
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!endDate) {
+                document.getElementById('result').classList.add('hidden');
+                return;
+            }
+
+            const courses = [];
+            let hasValidCourse = false;
+
+            // Collect course data
+            for (let i = 1; i <= courseCount; i++) {
+                const courseElement = document.getElementById(`course-${i}`);
+                if (!courseElement) continue;
+
+                const courseName = document.getElementById(`courseName-${i}`)?.value || `Course ${i}`;
+                const totals = calculateCourseTotal(i);
+
+                if (totals.total > 0) {
+                    hasValidCourse = true;
+                    const remaining = Math.max(0, totals.total - totals.completed);
+
+                    courses.push({
+                        name: courseName,
+                        total: totals.total,
+                        completed: totals.completed,
+                        remaining: remaining
+                    });
+                }
+            }
+
+            if (!hasValidCourse) {
+                document.getElementById('result').classList.add('hidden');
+                return;
+            }
+
+            const today = new Date();
+            const targetDate = new Date(endDate);
+            
+            if (targetDate <= today) {
+                showError("End date must be in the future");
+                return;
+            }
+
+            // Get holidays for current and next year
+            const currentYear = today.getFullYear();
+            const nextYear = targetDate.getFullYear();
+            let holidays = getSchoolHolidays(currentYear);
+            if (nextYear > currentYear) {
+                holidays = holidays.concat(getSchoolHolidays(nextYear));
+            }
+
+            const workdays = countWorkdays(today, targetDate, holidays);
+            
+            if (workdays <= 0) {
+                showError("No workdays available between now and the end date");
+                return;
+            }
+
+            // Calculate daily targets for each course
+            courses.forEach(course => {
+                course.dailyTarget = course.remaining > 0 ? Math.ceil(course.remaining / workdays) : 0;
+            });
+
+            showResults({
+                courses,
+                workdays,
+                endDate: targetDate.toLocaleDateString()
+            });
+        }
+
+        // Event listeners
+        document.getElementById('studentName').addEventListener('input', calculateActivities);
+        document.getElementById('endDate').addEventListener('change', calculateActivities);
+        document.getElementById('addCourseBtn').addEventListener('click', addCourse);
+
+        // Add initial course
+        addCourse();
+    </script>
+</body>
+</html>
