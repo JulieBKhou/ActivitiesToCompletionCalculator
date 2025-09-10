@@ -27,7 +27,7 @@
         }
         .course-card.has-data {
             border-color: #faf1ac;
-            background-color: #fcf4b8;
+            background-color: #f7d272;
         }
         .activity-group {
             background-color: #f3f4f6;
@@ -53,7 +53,7 @@
             <input
                 type="text"
                 id="studentName"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 placeholder="Enter student name"
             />
         </div>
@@ -66,7 +66,7 @@
             <input
                 type="date"
                 id="endDate"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
             />
         </div>
 
@@ -76,7 +76,7 @@
             <div id="coursesContainer"></div>
             <button
                 id="addCourseBtn"
-                class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="mt-4 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500"
             >
                 Add Course
             </button>
@@ -86,7 +86,7 @@
         <div id="result" class="bg-gray-50 p-4 rounded-lg hidden"></div>
         <div>
             <p class="text-sm text-gray-600 font-body">
-            <code>Developed by</code> <span class="font-semibold text-gradient">Julie Khou</span><br>
+            <br><code>Developed by</code> <span class="font-semibold text-gradient">Julie Khou</span><br>
             <code>Assisted by AI</code>
         </div>
         
@@ -182,7 +182,7 @@
                             <input
                                 type="number"
                                 id="${activityType.toLowerCase().replace(/[^a-z]/g, '')}-completed-${courseNum}"
-                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
                                 min="0"
                                 value="0"
                                 onchange="updateCourseCard(${courseNum})"
@@ -193,7 +193,7 @@
                             <input
                                 type="number"
                                 id="${activityType.toLowerCase().replace(/[^a-z]/g, '')}-total-${courseNum}"
-                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
                                 min="0"
                                 value="0"
                                 onchange="updateCourseCard(${courseNum})"
@@ -222,8 +222,8 @@
                     <input
                         type="text"
                         id="courseName-${courseNum}"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g., Algebra II"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                        placeholder="e.g., Environmental Science"
                         onchange="updateCourseCard(${courseNum})"
                     />
                 </div>
@@ -232,15 +232,15 @@
                     ${activityTypes.map(type => createActivityInput(type, courseNum)).join('')}
                 </div>
 
-                <div class="bg-blue-50 p-3 rounded-lg">
+                <div class="bg-yellow-50 p-3 rounded-lg">
                     <div class="grid grid-cols-2 gap-4 text-center">
                         <div>
-                            <div class="text-lg font-bold text-blue-600" id="totalActivities-${courseNum}">0</div>
-                            <div class="text-xs text-gray-600">Total Activities</div>
+                            <div class="text-lg font-bold text-yellow-600" id="completedActivities-${courseNum}">0</div>
+                            <div class="text-xs text-gray-600">Completed Activities</div>
                         </div>
                         <div>
-                            <div class="text-lg font-bold text-green-600" id="completedActivities-${courseNum}">0</div>
-                            <div class="text-xs text-gray-600">Completed Activities</div>
+                            <div class="text-lg font-bold text-green-600" id="totalActivities-${courseNum}">0</div>
+                            <div class="text-xs text-gray-600">Total Activities</div>
                         </div>
                     </div>
                 </div>
@@ -348,18 +348,18 @@
                 totalCompleted += course.completed;
                 totalActivities += course.total;
                 
-                const progressPercent = course.total > 0 ? Math.round((course.completed / course.total) * 100) : 0;
+                const progressPercent = course.total > 0 && (course.completed < course.total) ? Math.round((course.completed / course.total) * 100) : 0;
                 coursesHtml += `
                     <div class="bg-white p-4 rounded-lg border mb-3">
-                        <h4 class="font-semibold text-gray-800 mb-3">${course.name}</h4>
+                        <h4 class="font-semibold text-gray-800 mb-3 text-transform: capitalize">${course.name}</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div class="text-center">
-                                <span class="text-gray-600 block">Total</span>
-                                <div class="text-lg font-bold text-gray-800">${course.total}</div>
+                                <span class="text-gray-600 block">Completed</span>
+                                <div class="text-lg font-bold text-yellow-600">${course.completed}</div>
                             </div>
                             <div class="text-center">
-                                <span class="text-gray-600 block">Completed</span>
-                                <div class="text-lg font-bold text-green-600">${course.completed}</div>
+                                <span class="text-gray-600 block">Total</span>
+                                <div class="text-lg font-bold text-green-800">${course.total}</div>
                             </div>
                             <div class="text-center">
                                 <span class="text-gray-600 block">Remaining</span>
@@ -373,10 +373,10 @@
                         <div class="mt-3 pt-2 border-t">
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-600">Progress:</span>
-                                <span class="text-sm font-semibold text-green-600">${progressPercent}%</span>
+                                <span class="text-sm font-semibold text-yellow-600">${progressPercent}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
-                                <div class="bg-green-600 h-2 rounded-full" style="width: ${progressPercent}%"></div>
+                                <div class="bg-yellow-600 h-2 rounded-full" style="width: ${progressPercent}%"></div>
                             </div>
                         </div>
                     </div>
@@ -390,21 +390,25 @@
             resultDiv.innerHTML = `
                 <div class="space-y-4">
                     <div class="text-center">
-                        <h3 class="text-xl font-bold text-gray-800">${studentName ? `Study Plan for ${studentName}` : 'Your Study Plan'}</h3>
+                        <h3 class="text-xl font-bold text-gray-800 text-transform: capitalize">${studentName ? `Study Plan for ${studentName}` : 'Your Study Plan'}</h3>
                         <p class="text-gray-600">Target completion: ${data.endDate}</p>
                     </div>
                     
                     <!-- Overall Summary -->
                     <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
                         <h4 class="font-semibold text-gray-800 mb-3 text-center">Overall Summary</h4>
+                        <div class="text-center">
+                          <div class="text-4xl font-bold text-purple-800">${overallDailyTarget}</div>
+                          <div class="text-l text-purple-600">${overallDailyTarget > 1 ? 'Activities per Day' : 'Activity per Day'}</div>
+                      	</div>
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                             <div>
-                                <div class="text-2xl font-bold text-gray-800">${totalActivities}</div>
-                                <div class="text-xs text-gray-600">Total Activities</div>
+                                <div class="text-2xl font-bold text-yellow-600">${totalCompleted}</div>
+                                <div class="text-xs text-yellow-600">Completed</div>
                             </div>
                             <div>
-                                <div class="text-2xl font-bold text-green-600">${totalCompleted}</div>
-                                <div class="text-xs text-gray-600">Completed</div>
+                                <div class="text-2xl font-bold text-green-800">${totalActivities}</div>
+                                <div class="text-xs text-green-600">Total Activities</div>
                             </div>
                             <div>
                                 <div class="text-2xl font-bold text-blue-600">${totalRemaining}</div>
@@ -414,18 +418,14 @@
                                 <div class="text-2xl font-bold text-orange-600">${data.workdays}</div>
                                 <div class="text-xs text-gray-600">Workdays Left</div>
                             </div>
-                            <div>
-                                <div class="text-2xl font-bold text-purple-600">${overallDailyTarget}</div>
-                                <div class="text-xs text-gray-600">Total Per Day</div>
-                            </div>
                         </div>
                         <div class="mt-4">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-sm text-gray-600">Overall Progress:</span>
-                                <span class="text-sm font-semibold text-green-600">${overallProgress}%</span>
+                                <span class="text-sm font-semibold text-yellow-600">${overallProgress}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-3">
-                                <div class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full" style="width: ${overallProgress}%"></div>
+                                <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 h-3 rounded-full" style="width: ${overallProgress}%"></div>
                             </div>
                         </div>
                     </div>
