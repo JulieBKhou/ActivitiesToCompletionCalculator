@@ -475,7 +475,8 @@
                         remaining: remaining
                     });
                 } else {
-                    showError(`Course total for ${courseName} is 0`);
+                    const capitalizedName = courseName.charAt(0).toUpperCase() + courseName.slice(1).toLowerCase();
+                    showError(`Course total for ${capitalizedName} is 0`);
                     return;
                 }
             }
@@ -496,7 +497,7 @@
             // Check for completed > total
             const invalidCourses = courses.filter(course => course.completed > course.total);
             if (invalidCourses.length > 0) {
-                const courseNames = invalidCourses.map(course => course.name).join(', ');
+                const courseNames = invalidCourses.map(course => course.name.charAt(0).toUpperCase() + course.name.slice(1)).join(', ');
                 showError(`Activities completed cannot be more than total activities. Please check: ${courseNames}`);
                 return;
             }
