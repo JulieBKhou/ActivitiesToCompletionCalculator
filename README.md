@@ -34,7 +34,7 @@ Visit the calculator at: `https://juliebkhou.github.io/ActivitiesToCompletionCal
 3. **View Results**
    - Get personalized daily targets
    - Track progress across all courses
-   - See detailed breakdowns by activity type
+   - See detailed breakdowns
 
 ## 🧮 Calculation Logic
 
