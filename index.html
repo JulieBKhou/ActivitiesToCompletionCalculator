@@ -508,6 +508,9 @@
             // Calculate daily targets for each course
             courses.forEach(course => {
                 course.dailyTarget = course.remaining > 0 ? Math.ceil(course.remaining / workdays) : 0;
+                if (course.total < course.completed) {
+                	showError("Activities completed cannot be more than total activities");
+                }
             });
 
             showResults({
