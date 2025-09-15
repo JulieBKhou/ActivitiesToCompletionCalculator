@@ -51,7 +51,7 @@
             <div class="text-sm text-yellow-700 space-y-3">
                 <p><strong>Step 1:</strong> Log into Edgenuity and navigate to the "Manage Students" screen and find the student you'd like to address. Under the "Options" tab, click on  "Progress Report". This screen will give you their progress for all the courses they are currently enrolled in. Under each course are data sets (Quiz, Test, Assignment, etc.). We will use the numbers underneath these headers to populate the fields below.</p>
                 
-                <p><strong>Step 2:</strong> In this website, input the student's name and target completion date below. For each course, input the course name; to add more courses, select the "Add Course" button. In each course, fill out the data set, input the associated numbers with "Taken" from the Edgenuity Progress Report corresponding with "Completed," and "Total" corresponding with "Total"
+                <p><strong>Step 2:</strong> In this website, input the student's name and target completion date below. For each course, input the course name; to add more courses, select the "Add Course" button. In each course, fill out the data set, input the associated numbers with "Taken" and "Total" from the Edgenuity Progress Report
                 
                 <p><strong>Result:</strong> As you enter the data, the results will appear below and will update automatically. Results have personalized daily targets per day, as well as by course. The numbers shown are the amount of activities to complete daily throughout the weekdays, and automatically exclude US Holidays and school breaks.</p>
             </div>
@@ -106,7 +106,8 @@
 
     <script>
         let courseCount = 0;
-        const maxCourses = 8;
+        let courseNumID = 0;
+        const maxCourses = 15;
 
         // Get today's date and set as minimum for date input
         const today = new Date().toISOString().split('T')[0];
@@ -189,10 +190,10 @@
                     <h5 class="text-sm font-medium text-gray-700 mb-2">${activityType}</h5>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs text-gray-600 mb-1">Completed</label>
+                            <label class="block text-xs text-gray-600 mb-1">Taken</label>
                             <input
                                 type="number"
-                                id="${activityType.toLowerCase().replace(/[^a-z]/g, '')}-completed-${courseNum}"
+                                id="${activityType.toLowerCase().replace(/[^a-z]/g, '')}-taken-${courseNum}"
                                 class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-yellow-500"
                                 min="0"
                                 value="0"
@@ -246,8 +247,8 @@
                 <div class="bg-yellow-50 p-3 rounded-lg">
                     <div class="grid grid-cols-2 gap-4 text-center">
                         <div>
-                            <div class="text-lg font-bold text-yellow-600" id="completedActivities-${courseNum}">0</div>
-                            <div class="text-xs text-gray-600">Completed Activities</div>
+                            <div class="text-lg font-bold text-yellow-600" id="takenActivities-${courseNum}">0</div>
+                            <div class="text-xs text-gray-600">Taken Activities</div>
                         </div>
                         <div>
                             <div class="text-lg font-bold text-green-600" id="totalActivities-${courseNum}">0</div>
@@ -263,34 +264,35 @@
         function calculateCourseTotal(courseNum) {
             const activityTypes = ['quiz', 'test', 'exam', 'essayassignment', 'labproject'];
             let totalActivities = 0;
-            let completedActivities = 0;
+            let takenActivities = 0;
 
             activityTypes.forEach(type => {
-                const completedEl = document.getElementById(`${type}-completed-${courseNum}`);
+                const takenEl = document.getElementById(`${type}-taken-${courseNum}`);
                 const totalEl = document.getElementById(`${type}-total-${courseNum}`);
                 
-                if (completedEl && totalEl) {
-                    const completed = parseInt(completedEl.value) || 0;
+                if (takenEl && totalEl) {
+                    const taken = parseInt(takenEl.value) || 0;
                     const total = parseInt(totalEl.value) || 0;
                     
-                    completedActivities += completed;
+                    takenActivities += taken;
                     totalActivities += total;
                 }
             });
 
             // Update the display
             document.getElementById(`totalActivities-${courseNum}`).textContent = totalActivities;
-            document.getElementById(`completedActivities-${courseNum}`).textContent = completedActivities;
+            document.getElementById(`takenActivities-${courseNum}`).textContent = takenActivities;
 
-            return { total: totalActivities, completed: completedActivities };
+            return { total: totalActivities, taken: takenActivities };
         }
 
         function addCourse() {
             if (courseCount >= maxCourses) return;
             
             courseCount++;
+            courseNumID++;
             const coursesContainer = document.getElementById('coursesContainer');
-            const courseCard = createCourseCard(courseCount);
+            const courseCard = createCourseCard(courseNumID);
             coursesContainer.appendChild(courseCard);
             
             if (courseCount >= maxCourses) {
@@ -351,22 +353,22 @@
             
             let coursesHtml = '';
             let totalRemaining = 0;
-            let totalCompleted = 0;
+            let totaltaken = 0;
             let totalActivities = 0;
             
             data.courses.forEach(course => {
                 totalRemaining += course.remaining;
-                totalCompleted += course.completed;
+                totaltaken += course.taken;
                 totalActivities += course.total;
                 
-                const progressPercent = course.total > 0 && (course.completed < course.total) ? Math.round((course.completed / course.total) * 100) : 0;
+                const progressPercent = course.total > 0 && (course.taken < course.total) ? Math.round((course.taken / course.total) * 100) : 0;
                 coursesHtml += `
                     <div class="bg-white p-4 rounded-lg border mb-3">
                         <h4 class="font-semibold text-gray-800 mb-3 text-transform: capitalize">${course.name}</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                             <div class="text-center">
-                                <span class="text-gray-600 block">Completed</span>
-                                <div class="text-lg font-bold text-yellow-600">${course.completed}</div>
+                                <span class="text-gray-600 block">Taken</span>
+                                <div class="text-lg font-bold text-yellow-600">${course.taken}</div>
                             </div>
                             <div class="text-center">
                                 <span class="text-gray-600 block">Total</span>
@@ -394,7 +396,7 @@
                 `;
             });
             
-            const overallProgress = totalActivities > 0 ? Math.round((totalCompleted / totalActivities) * 100) : 0;
+            const overallProgress = totalActivities > 0 ? Math.round((totaltaken / totalActivities) * 100) : 0;
             const overallDailyTarget = totalRemaining > 0 ? Math.ceil(totalRemaining / data.workdays) : 0;
             
             resultDiv.className = 'bg-gray-50 p-4 rounded-lg';
@@ -414,8 +416,8 @@
                       	</div>
                         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
                             <div>
-                                <div class="text-2xl font-bold text-yellow-600">${totalCompleted}</div>
-                                <div class="text-xs text-yellow-600">Completed</div>
+                                <div class="text-2xl font-bold text-yellow-600">${totaltaken}</div>
+                                <div class="text-xs text-yellow-600">Taken</div>
                             </div>
                             <div>
                                 <div class="text-2xl font-bold text-green-800">${totalActivities}</div>
@@ -468,7 +470,7 @@
             let hasValidCourse = false;
 
             // Collect course data
-            for (let i = 1; i <= courseCount; i++) {
+            for (let i = 1; i <= courseNumID; i++) {
                 const courseElement = document.getElementById(`course-${i}`);
                 if (!courseElement) continue;
 
@@ -477,12 +479,12 @@
 
                 if (totals.total > 0) {
                     hasValidCourse = true;
-                    const remaining = Math.max(0, totals.total - totals.completed);
+                    const remaining = Math.max(0, totals.total - totals.taken);
 
                     courses.push({
                         name: courseName,
                         total: totals.total,
-                        completed: totals.completed,
+                        taken: totals.taken,
                         remaining: remaining
                     });
                 } else {
@@ -505,11 +507,11 @@
                 return;
             }
 
-            // Check for completed > total
-            const invalidCourses = courses.filter(course => course.completed > course.total);
+            // Check for taken > total
+            const invalidCourses = courses.filter(course => course.taken > course.total);
             if (invalidCourses.length > 0) {
                 const courseNames = invalidCourses.map(course => course.name.charAt(0).toUpperCase() + course.name.slice(1)).join(', ');
-                showError(`Activities completed cannot be more than total activities. Please check: ${courseNames}`);
+                showError(`Activities taken cannot be more than total activities. Please check: ${courseNames}`);
                 return;
             }
 
