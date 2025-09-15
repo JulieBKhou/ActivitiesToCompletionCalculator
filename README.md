@@ -15,7 +15,7 @@ Visit the calculator at: `https://juliebkhou.github.io/ActivitiesToCompletionCal
   - Labs/Projects (completed/total)
 
 ### Course Calculations & Detaied Progress Reports
-- Support for up to 8 courses
+- Support for up to 15 courses
 - Automatic calculation of totals and remaining activities
 - Daily activity targets for each course and overall
 - Visual progress bars to track each course and overall courses
@@ -27,7 +27,7 @@ Visit the calculator at: `https://juliebkhou.github.io/ActivitiesToCompletionCal
    - Set target completion date
 
 2. **Add Courses**
-   - Click "Add Course" (up to 8 courses)
+   - Click "Add Course"
    - Enter course name
    - Fill in completed and total activities for each type
 
@@ -61,7 +61,7 @@ const activityTypes = ['Quiz', 'Test', 'Exam', 'Essay/Assignment', 'Lab/Project'
 ```
 - **Adjust Maximum Courses:** Change the `maxCourses` variable to allow more or fewer courses:
 ```javascript
-const maxCourses = 8; // Change this number
+const maxCourses = 15; // Change this number
 ```
 
 ## 🆘 Support
