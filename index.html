@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="lflcslogo.jpeg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .icon {
             display: inline-block;
@@ -96,6 +97,15 @@
 
         <!-- Results Section -->
         <div id="result" class="bg-gray-50 p-4 rounded-lg hidden"></div>
+
+        <!-- PDF Export Section -->
+        <div id="pdfExportSection" class="mt-6 text-center hidden">
+          <button id="exportPdfBtn" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+          📄 Save Results as PDF
+          </button>
+        </div>
+
+        <!-- Made by Section -->
         <div>
             <p class="text-sm text-gray-600 font-body">
             <br><code>Developed by</code> <span class="font-semibold text-gradient">Julie Khou</span><br>
@@ -108,6 +118,7 @@
         let courseCount = 0;
         let courseNumID = 0;
         const maxCourses = 15;
+        let currentResults = null;
 
         // Get today's date and set as minimum for date input
         const today = new Date().toISOString().split('T')[0];
@@ -345,11 +356,14 @@
                 </div>
             `;
             resultDiv.classList.remove('hidden');
+            document.getElementById('pdfExportSection').classList.add('hidden');
+            currentResults = null;
         }
 
         function showResults(data) {
             const resultDiv = document.getElementById('result');
             const studentName = document.getElementById('studentName').value;
+            currentResults = { ...data, studentName };
             
             let coursesHtml = '';
             let totalRemaining = 0;
@@ -456,6 +470,120 @@
                 </div>
             `;
             resultDiv.classList.remove('hidden');
+
+            document.getElementById('pdfExportSection').classList.remove('hidden');
+
+        }
+
+        function exportToPDF() {
+            if (!currentResults) return;
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const studentName = currentResults.studentName || 'Student';
+            
+            // Calculate totals
+            let totalRemaining = 0;
+            let totalTaken = 0;
+            let totalActivities = 0;
+            
+            currentResults.courses.forEach(course => {
+                totalRemaining += course.remaining;
+                totalTaken += course.taken;
+                totalActivities += course.total;
+            });
+            
+            const overallProgress = totalActivities > 0 ? Math.round((totalTaken / totalActivities) * 100) : 0;
+            const overallDailyTarget = totalRemaining > 0 ? Math.ceil(totalRemaining / currentResults.workdays) : 0;
+            
+            // PDF Content
+            let yPos = 20;
+            
+            // Title
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Edgenuity Study Plan', 105, yPos, { align: 'center' });
+            yPos += 15;
+            
+            // Student name and date
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Student: ${studentName}`, 20, yPos);
+            yPos += 10;
+            doc.text(`Target Completion: ${currentResults.endDate}`, 20, yPos);
+            yPos += 20;
+            
+            // Overall Summary
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Overall Summary', 20, yPos);
+            yPos += 15;
+            
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Daily Target: ${overallDailyTarget} ${overallDailyTarget > 1 ? 'activities' : 'activity'} per day`, 20, yPos);
+            yPos += 8;
+            doc.text(`Total Activities: ${totalActivities}`, 20, yPos);
+            yPos += 8;
+            doc.text(`Activities Taken: ${totalTaken}`, 20, yPos);
+            yPos += 8;
+            doc.text(`Activities Remaining: ${totalRemaining}`, 20, yPos);
+            yPos += 8;
+            doc.text(`Workdays Left: ${currentResults.workdays}`, 20, yPos);
+            yPos += 8;
+            doc.text(`Overall Progress: ${overallProgress}%`, 20, yPos);
+            yPos += 20;
+            
+            // Course Breakdown
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Course Breakdown', 20, yPos);
+            yPos += 15;
+            
+            currentResults.courses.forEach((course, index) => {
+                // Check if we need a new page
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                const progressPercent = course.total > 0 ? Math.round((course.taken / course.total) * 100) : 0;
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${course.name}`, 20, yPos);
+                yPos += 10;
+                
+                doc.setFont('helvetica', 'normal');
+                doc.text(`• Activities Taken: ${course.taken}`, 25, yPos);
+                yPos += 6;
+                doc.text(`• Total Activities: ${course.total}`, 25, yPos);
+                yPos += 6;
+                doc.text(`• Remaining: ${course.remaining}`, 25, yPos);
+                yPos += 6;
+                doc.text(`• Daily Target: ${course.dailyTarget}`, 25, yPos);
+                yPos += 6;
+                doc.text(`• Progress: ${progressPercent}%`, 25, yPos);
+                yPos += 15;
+            });
+            
+            // Footer
+            if (yPos > 250) {
+                doc.addPage();
+                yPos = 20;
+            }
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.text('* Calculation excludes weekends and school holidays', 20, yPos);
+            yPos += 6;
+            doc.text('* Activities include: Quizzes, Tests, Exams, Essays/Assignments, and Labs/Projects', 20, yPos);
+            yPos += 10;
+            doc.text('Generated by Edgenuity Activities Calculator - Developed by Julie Khou', 20, yPos);
+            
+            // Save the PDF
+            const filename = studentName ? `${studentName}_Study_Plan.pdf` : 'Study_Plan.pdf';
+            doc.save(filename);
         }
 
         function calculateActivities() {
@@ -546,6 +674,8 @@
         document.getElementById('studentName').addEventListener('input', calculateActivities);
         document.getElementById('endDate').addEventListener('change', calculateActivities);
         document.getElementById('addCourseBtn').addEventListener('click', addCourse);
+        document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+
 
         // Add initial course
         addCourse();
