@@ -20,6 +20,11 @@ Visit the calculator at: `https://juliebkhou.github.io/ActivitiesToCompletionCal
 - Daily activity targets for each course and overall
 - Visual progress bars to track each course and overall courses
 
+### Save the Results as a PDF
+- Button below the results to save the summaries
+- First page contains the overall summary and summaries of up to 6 courses
+- 7+ courses will spill onto the other pages
+
 ## 🎯 How to Use
 
 1. **Enter Student Information**
@@ -35,6 +40,10 @@ Visit the calculator at: `https://juliebkhou.github.io/ActivitiesToCompletionCal
    - Get personalized daily targets
    - Track progress across all courses
    - See detailed breakdowns
+
+4. **Save Results**
+   - Save the overall summary
+   - Save individual course summaries
 
 ## 🧮 Calculation Logic
 
@@ -74,4 +83,4 @@ If you encounter any issues:
 
 ---
 
-*Developed by Julie Khou in collaboration with Claude AI*
+*Developed by Julie Khou in collaboration with AI*
