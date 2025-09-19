@@ -22,8 +22,8 @@ Visit the calculator at: `https://juliebkhou.github.io/ActivitiesToCompletionCal
 
 ### Save the Results as a PDF
 - Button below the results to save the summaries
-- First page contains the overall summary and summaries of up to 6 courses
-- 7+ courses will spill onto the other pages
+- First page contains the overall summary and summaries of up to 5 courses
+- 6+ courses will spill onto the other pages
 
 ## 🎯 How to Use
 
